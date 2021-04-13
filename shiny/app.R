@@ -11,7 +11,6 @@ library(shiny)
 library(readr)
 library(tidyverse)
 library(lubridate)
-library(plotly)
 library(forecast)
 
 #load data
@@ -190,7 +189,7 @@ server <- function(input, output) {
   })
   #Ecotech Time Series Decomposition
   output$decomp_plot_eco <- renderPlot({
-    eco_dat_dcmp() %>% autoplot() + theme_light() + ggtitle(paste0("Decomposition of additive time series: Ecotech: ", input$ectotech_variable))
+    eco_dat_dcmp() %>% autoplot() + theme_light() + ggtitle(paste0("Decomposition of additive time series: Ecotech: ", input$ecotech_variable))
   })
   
   #Lascar
