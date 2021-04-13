@@ -12,6 +12,7 @@ library(readr)
 library(tidyverse)
 library(lubridate)
 library(plotly)
+library(forecast)
 
 #load data
 logdat_merge <- read_csv("logdat_merge.csv")
