@@ -378,3 +378,19 @@ ggplot(subset(logdat_lascar, time > as.POSIXct("2019-05-01 00:00:01", tz="") & !
   geom_point()+
   stat_summary(aes(y=a_temp, group = date), fun.y = "mean", colour = "red", geom = "line", group=logger)
 
+
+#time series analysis
+ts_s_temp <- logdat_merge  %>% 
+  filter(logger == "A")  %>% 
+  filter(variable == "PAR")  %>% 
+  select(date, hour, m_value)  %>% 
+  summarise_all(., mean)  %>%  
+  as.data.frame()  %>% 
+  mutate(time = as.POSIXct(paste0(date, " ", hour, ":00:00"), format = "%Y-%m-%d %H:%M:%S")) %>% 
+  filter(time > as.POSIXct("2019-03-29 00:00:01")) %>% 
+  select(m_value, time)
+  
+
+library(forecast)
+ts_s_temp_xts <- msts(ts_s_temp$m_value, seasonal.periods = c(24))
+ts_s_temp_xts  %>% decompose()  %>% autoplot()
