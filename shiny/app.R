@@ -15,20 +15,27 @@ library(forecast)
 
 #load data
 logdat_merge <- read_csv("logdat_merge.csv")
+logdat_merge <- logdat_merge  %>% 
+  mutate(time = as.POSIXct(time))  %>% 
+  mutate(time_r = as.POSIXct(trunc(time, units = "hours"))) %>% 
+  mutate(daynight = ifelse(hour > 6 & hour <= 18, "day", "night"))
 
+
+time_start <- date(min(logdat_merge$time))
+time_end <- date(max(logdat_merge$time))
 
 
 ui <- fluidPage(
     
     # Application title
-    titlePanel("Climate Data 2019"),
+    titlePanel(paste0("Climate Data "), year(time_start)),
     
     # Sidebar with a slider input for number of bins 
     sidebarLayout(
         sidebarPanel(
             # Select date range to be plotted
-            dateRangeInput("date", strong("Date range"), start = "2019-03-29", end = "2019-07-02",
-                           min = "2019-03-29", max = "2019-07-09"),
+            dateRangeInput("date", strong("Date range"), start = as.character(time_start), end = as.character(time_end),
+                           min = as.character(time_start), max = as.character(as.character(time_end))),
             
             radioButtons("all_or_mean", "mean of selected loggers?",
                          choices = c( "Yes"= "Yes",
@@ -90,16 +97,12 @@ ui <- fluidPage(
 
 # Define server logic---
 server <- function(input, output) {
-  logdat_merge <- logdat_merge  %>% 
-    mutate(time = as.POSIXct(time))  %>% 
-    mutate(time_r = as.POSIXct(trunc(time, units = "hours"))) %>% 
-    mutate(daynight = ifelse(hour > 6 & hour <= 18, "day", "night"))
-  
-  
-  
-  #filter data and summarize if selected----
-  #ecotech
-  eco_dat_all <- reactive({
+
+ 
+  ##filter data and summarize if selected----
+  ##ecotech
+  #all selected data
+  eco_dat_all <- reactive({ 
     req(input$ecotech_variable)
     logdat_merge  %>% 
       filter(time > as.POSIXct(input$date[1]), 
@@ -108,7 +111,9 @@ server <- function(input, output) {
              logger %in% input$ecotech_logger,
              variable == input$ecotech_variable)
   })
-  eco_dat_mean <- reactive({
+  
+  #mean of selected data
+  eco_dat_mean <- reactive({ 
     req(input$ecotech_variable)
     logdat_merge  %>%
       filter(time > as.POSIXct(input$date[1]),
@@ -121,6 +126,7 @@ server <- function(input, output) {
       mutate(logger = "mean")
   })
   
+  #decomposition of time series
   eco_dat_dcmp <- reactive({
     eco_dat_mean() %>%  
       as.data.frame() %>% 
@@ -133,7 +139,8 @@ server <- function(input, output) {
       msts(., seasonal.periods = c(24))  %>% decompose()
     })
   
-  #Lascar
+  ##Lascar
+  #all selected data
   lasc_dat_all <- reactive({
     req(input$lascar_variable)
     logdat_merge  %>% 
@@ -143,6 +150,8 @@ server <- function(input, output) {
              logger %in% input$lascar_logger,
              variable == input$lascar_variable)
   })
+  
+  #mean of selected data
   lasc_dat_mean <- reactive({
     req(input$lascar_variable)
     logdat_merge  %>%
@@ -156,6 +165,7 @@ server <- function(input, output) {
       mutate(logger = "mean")
   })
   
+  #decomposition of time series
   lasc_dat_dcmp <- reactive({
    lasc_dat_mean() %>%  
       as.data.frame() %>% 
@@ -168,6 +178,7 @@ server <- function(input, output) {
       msts(., seasonal.periods = c(24))  %>% decompose()
     
   }) 
+  
   #create main Plots----
   #Ecotech
   output$mainplot_eco <- renderPlot({
